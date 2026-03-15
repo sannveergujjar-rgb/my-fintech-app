@@ -4,153 +4,110 @@ import plotly.express as px
 import plotly.graph_objects as go
 import google.generativeai as genai
 
-# 1. PAGE SETUP
-st.set_page_config(page_title="FinVantage Pro | Credit Model", layout="wide")
+# 1. PAGE CONFIGURATION
+st.set_page_config(page_title="Credit Risk AI Analyzer", layout="wide")
 
-# 2. SNOW BACKGROUND & HIGH CONTRAST TEXT
+# 2. ADVANCED UI STYLING
 st.markdown("""
     <style>
-    .stApp {
-        background: linear-gradient(to bottom, #f0f4f8, #ffffff);
+    .stApp { background: #ffffff; }
+    
+    /* Centered Main Heading */
+    .main-header {
+        text-align: center;
+        color: #003366;
+        font-size: 50px;
+        font-weight: 800;
+        padding: 20px 0px;
+        margin-bottom: 10px;
     }
-    /* Black text for maximum readability */
+
+    /* Sub-header for Login */
+    .sub-header {
+        text-align: center;
+        color: #444;
+        font-size: 22px;
+        margin-bottom: 30px;
+    }
+
+    /* High Readability Content */
     html, body, [class*="st-"], p, label {
         color: #000000 !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 18px;
     }
-    h1, h2, h3 { color: #003366 !important; font-weight: bold; }
-    
+
+    /* EXACT Result Box Style from Screenshots */
+    .result-box {
+        background-color: #f9f9f9;
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.05);
+        min-height: 260px;
+    }
+
+    /* News Ticker - Navy Blue */
     .ticker-wrap {
         width: 100%; overflow: hidden; background: #003366;
-        padding: 10px 0; border-radius: 5px; margin-bottom: 20px;
+        padding: 12px 0; border-radius: 10px; margin-bottom: 30px;
     }
     .ticker {
         display: inline-block; white-space: nowrap;
-        animation: ticker 40s linear infinite; color: #ffffff;
+        animation: ticker 45s linear infinite; color: #ffffff; font-size: 19px;
     }
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. API CONFIG (Replace with your Gemini Key)
-FREE_GEMINI_KEY = "YOUR_GEMINI_API_KEY_HERE"
-genai.configure(api_key=FREE_GEMINI_KEY)
+# 3. AI CONFIGURATION
+# Replace with your actual Gemini API Key
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+genai.configure(api_key=GEMINI_API_KEY)
 
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-# --- LOGIN PAGE ---
+# --- PHASE 1: LOGIN WINDOW ---
 if not st.session_state['logged_in']:
-    col1, col2, col3 = st.columns([1,1.5,1])
+    st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='sub-header'>Secure Institutional Access</p>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
-        st.markdown("<h1 style='text-align: center;'>Banker Login</h1>", unsafe_allow_html=True)
+        # High-Quality Login Image
+        st.image("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80", use_container_width=True)
         user = st.text_input("Username")
         pw = st.text_input("Password", type="password")
-        if st.button("Access Portal", use_container_width=True):
+        if st.button("Login to Dashboard", use_container_width=True):
             if user == "admin" and pw == "finance123":
                 st.session_state['logged_in'] = True
                 st.rerun()
             else:
-                st.error("Invalid Credentials")
+                st.error("Invalid Username or Password")
 else:
-    # --- MAIN DASHBOARD (Ticker only here) ---
+    # --- PHASE 2: AUTHORIZED DASHBOARD ---
+    st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
+    
     st.markdown("""<div class="ticker-wrap"><div class="ticker">
-        <span style="margin-right:50px;">📢 RBI Policy: MSME Credit Support increased</span>
-        <span style="margin-right:50px;">📈 SENSEX hits record high</span>
-        <span style="margin-right:50px;">⚠️ New KYC Norms mandatory from April 2026</span>
+        <span style="margin-right:70px;">📈 MSME Sector: Credit growth projected at 12.5% for 2026</span>
+        <span style="margin-right:70px;">📢 RBI Alert: New provisioning norms for unsecured loans</span>
+        <span style="margin-right:70px;">🚀 Tech Alert: AI-driven credit scoring reduces NPA by 15%</span>
     </div></div>""", unsafe_allow_html=True)
 
-    st.sidebar.title("🛡️ Credit Score AI Analyzer ")
+    st.sidebar.title("System Controls")
     st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
 
-    tab1, tab2, tab3 = st.tabs(["Individual Analysis", "Bulk Dashboard", "AI Research Assistant"])
+    t1, t2, t3 = st.tabs(["Individual Analysis", "Portfolio Dashboard", "AI Assistant"])
 
-    with tab1:
-        st.header("🔍 Credit Risk Underwriting")
+    with t1:
+        st.subheader("🔍 New Loan Evaluation")
         c1, c2 = st.columns(2)
         with c1:
-            biz_name = st.text_input("Business Name")
-            rev = st.number_input("Annual Revenue (in ₹ Cr)", min_value=0.0, value=2.0)
-            years = st.number_input("Years in Business", min_value=0, value=6)
-            industry = st.selectbox("Industry Risk Type", ["Low Risk", "Medium Risk", "High Risk", "Very High Risk"])
+            biz_name = st.text_input("Business Name", value="Sharma Global Ventures")
+            rev = st.number_input("Annual Revenue (₹ Cr)", value=2.0)
+            years = st.number_input("Years in Business", value=6)
+            industry = st.selectbox("Industry Risk", ["Low Risk", "Medium Risk", "High Risk", "Very High Risk"])
         with c2:
-            cibil = st.number_input("Credit Score (CIBIL)", min_value=300, max_value=900, value=720)
-            dti = st.slider("Debt-to-Income Ratio (DTI %)", 0, 100, 35)
-
-        if st.button("Generate Final Decision Report", use_container_width=True):
-            # --- SCORING LOGIC (FROM YOUR DOC) ---
-            s_rev = 25 if rev > 5 else (20 if rev >= 1 else (15 if rev >= 0.5 else (10 if rev >= 0.1 else 5)))
-            s_years = 15 if years > 10 else (12 if years >= 5 else (9 if years >= 3 else (6 if years >= 1 else 3)))
-            s_dti = 25 if dti < 20 else (20 if dti <= 40 else (15 if dti <= 60 else (10 if dti <= 80 else 5)))
-            s_cibil = 25 if cibil >= 750 else (20 if cibil >= 700 else (15 if cibil >= 650 else (10 if cibil >= 600 else 5)))
-            ind_map = {"Low Risk": 10, "Medium Risk": 7, "High Risk": 4, "Very High Risk": 2}
-            s_ind = ind_map[industry]
-              # Data Table for Report
-    df = pd.DataFrame({
-        "Metric": ["CIBIL Contribution", "Experience Score", "Debt-to-Income Score", "Final Total"],
-        "Value": [f"{cibil_score:.2f}", f"{exp_score:.2f}", f"{debt_ratio:.2f}", f"{total_score:.2f}"]
-    })
-    st.table(df)
-
-            total_score = s_rev + s_years + s_dti + s_cibil + s_ind
-
-            # --- GAUGE CHART (FIXED ARROW) ---
-            fig = go.Figure(go.Indicator(
-                mode="gauge+number+delta",
-                value=total_score,
-                domain={'x': [0, 1], 'y': [0, 1]},
-                title={'text': "Credit Health Score", 'font': {'size': 24, 'color': '#003366'}},
-                gauge={
-                    'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "black"},
-                    'bar': {'color': "#003366"}, # The 'Arrow/Needle' equivalent in Streamlit Gauge
-                    'bgcolor': "white",
-                    'borderwidth': 2,
-                    'bordercolor': "gray",
-                    'steps': [
-                        {'range': [0, 60], 'color': '#ff4d4d'},
-                        {'range': [60, 80], 'color': '#ffd11a'},
-                        {'range': [80, 100], 'color': '#2eb82e'}]
-                }))
-            st.plotly_chart(fig, use_container_width=True)
-
-            # --- RESULTS SECTION ---
-            res_c1, res_c2 = st.columns(2)
-            with res_c1:
-                st.subheader("📋 Official Decision")
-                if total_score >= 80:
-                    st.success("**DECISION: APPROVED**")
-                    risk_lv = "Low Risk"
-                elif total_score >= 60:
-                    st.warning("**DECISION: REFERRED FOR REVIEW**")
-                    risk_lv = "Medium Risk"
-                else:
-                    st.error("**DECISION: REJECTED**")
-                    risk_lv = "High Risk"
-                
-                st.write(f"**Total Points:** {total_score}/100")
-                st.write(f"**Risk Level:** {risk_lv}")
-
-            with res_c2:
-                st.subheader("🤖 AI Suggestions & Recommendations")
-                try:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
-                    prompt = f"Using the Small Business Credit Risk Model: {biz_name} scored {total_score}/100 and is {risk_lv}. Revenue {rev}Cr, Years {years}, CIBIL {cibil}, DTI {dti}%. Provide 3 specific banking recommendations."
-                    response = model.generate_content(prompt)
-                    st.write(response.text)
-                except:
-                    st.write("1. Tighten DTI monitoring.\n2. Verify latest GST filings.\n3. Request collateral for Medium Risk cases.")
-
-    # Bulk Dashboard & Chat Assistant remain the same but with White Theme...
-    with tab2:
-        st.header("📊 Portfolio Analytics")
-        uploaded_file = st.file_uploader("Upload Excel/CSV", type=["csv", "xlsx"])
-        if uploaded_file:
-            df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-            st.dataframe(df)
-
-    with tab3:
-        st.header("🤖 AI Financial Assistant")
-        user_q = st.chat_input("Ask me about the credit model...")
-        if user_q:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            st.write(model.generate_content(user_q).text)
+            cibil = st.number_input("CIBIL Score", min_value=300, max_value=900, value=720)
+            dti = st.slider("Debt-to-Income (%)", 0, 100, 35
