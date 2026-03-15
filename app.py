@@ -1,48 +1,58 @@
 import streamlit as st
 import pandas as pd
 
-# Page Config
-st.set_page_config(page_title="MSME Credit Risk AI", layout="centered")
+# 1. SIMPLE LOGIN SYSTEM
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
 
-st.title("🛡️ AI Credit Risk Analyzer")
-st.subheader("MBA Finance Project: MSME Lending Model")
+def login():
+    st.title("🔐 FinTech Portal Login")
+    user = st.text_input("Username (MBA Student)")
+    pw = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if user == "admin" and pw == "finance123": # You can change these
+            st.session_state['logged_in'] = True
+            st.rerun()
+        else:
+            st.error("Invalid Credentials")
 
-# Sidebar for Inputs
-st.sidebar.header("Business Details")
-biz_name = st.sidebar.text_input("Business Name", "Example Traders")
-revenue = st.sidebar.number_input("Annual Revenue (₹ Lakhs)", min_value=1, value=50)
-years = st.sidebar.slider("Years in Business", 0, 30, 5)
-cibil = st.sidebar.slider("CIBIL Score", 300, 900, 750)
-existing_debt = st.sidebar.number_input("Existing Debt (₹ Lakhs)", min_value=0, value=10)
+# 2. MAIN APP INTERFACE
+if st.session_state['logged_in']:
+    st.set_page_config(page_title="MSME AI Analyzer", layout="wide")
+    if st.button("Log Out"):
+        st.session_state['logged_in'] = False
+        st.rerun()
 
-# The "AI" Scoring Logic (Weighted Model)
-# CIBIL: 40%, Revenue-to-Debt: 30%, Experience: 30%
-if st.sidebar.button("Analyze Risk"):
-    # Normalized Scores
-    cibil_score = (cibil - 300) / 600 * 40
-    exp_score = min((years / 10) * 30, 30)
-    debt_ratio = (1 - (existing_debt / revenue)) * 30 if revenue > existing_debt else 0
+    st.title("🛡️ AI Credit Risk Analyzer")
     
-    total_score = cibil_score + exp_score + debt_ratio
+    # FEATURE: FILE UPLOAD
+    st.header("📂 Bulk Portfolio Analysis")
+    uploaded_file = st.file_uploader("Upload Business Data (Excel/CSV)", type=["csv", "xlsx"])
     
-    # Display Results
-    st.write(f"### Analysis for: {biz_name}")
+    if uploaded_file:
+        data = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+        st.write("### Data Preview", data.head())
+        # Add MBA Logic: Calculate Average CIBIL for the file
+        if 'CIBIL' in data.columns:
+            st.info(f"Average Portfolio CIBIL: {data['CIBIL'].mean():.2f}")
     
-    if total_score > 75:
-        st.success(f"**Score: {total_score:.2f}/100 - LOW RISK**")
-        st.write("✅ **Recommendation:** Approve Loan at Prime Interest Rate (8-10%).")
-    elif total_score > 50:
-        st.warning(f"**Score: {total_score:.2f}/100 - MEDIUM RISK**")
-        st.write("⚠️ **Recommendation:** Refer to Credit Officer. Suggest 12% Interest + Collateral.")
-    else:
-        st.error(f"**Score: {total_score:.2f}/100 - HIGH RISK**")
-        st.write("❌ **Recommendation:** Reject Application. High probability of default.")
+    st.divider()
 
-    # Data Table for Report
-    df = pd.DataFrame({
-        "Metric": ["CIBIL Contribution", "Experience Score", "Debt-to-Income Score", "Final Total"],
-        "Value": [f"{cibil_score:.2f}", f"{exp_score:.2f}", f"{debt_ratio:.2f}", f"{total_score:.2f}"]
-    })
-    st.table(df)
+    # SIDEBAR: MANUAL INPUT
+    st.sidebar.header("Manual Single Entry")
+    biz_name = st.sidebar.text_input("Business Name")
+    revenue = st.sidebar.number_input("Annual Revenue (₹ Lakhs)", value=50)
+    years = st.sidebar.slider("Years in Business", 0, 30, 5)
+    cibil = st.sidebar.slider("CIBIL Score", 300, 900, 750)
+
+    if st.sidebar.button("Analyze Risk"):
+        # Logic: (CIBIL 40% + Exp 30% + Revenue 30%)
+        score = ((cibil-300)/600*40) + (min(years/10*30, 30)) + 30
+        st.subheader(f"Results for {biz_name}")
+        if score > 70:
+            st.success(f"Score: {score:.1f} - APPROVED (Low Risk)")
+        else:
+            st.error(f"Score: {score:.1f} - REJECTED (High Risk)")
+
 else:
-    st.info("Enter business details in the sidebar and click 'Analyze Risk' to start.")
+    login()
