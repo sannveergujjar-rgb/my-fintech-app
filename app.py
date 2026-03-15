@@ -1,113 +1,124 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import google.generativeai as genai
 
-# 1. PAGE CONFIGURATION
+# 1. APP CONFIGURATION
 st.set_page_config(page_title="Credit Risk AI Analyzer", layout="wide")
 
-# 2. ADVANCED UI STYLING
+# 2. PROFESSIONAL UI STYLING (CSS)
 st.markdown("""
     <style>
     .stApp { background: #ffffff; }
-    
-    /* Centered Main Heading */
     .main-header {
         text-align: center;
         color: #003366;
         font-size: 50px;
         font-weight: 800;
-        padding: 20px 0px;
-        margin-bottom: 10px;
+        padding-top: 20px;
     }
-
-    /* Sub-header for Login */
-    .sub-header {
+    .sub-title {
         text-align: center;
-        color: #444;
-        font-size: 22px;
+        color: #555;
+        font-size: 20px;
         margin-bottom: 30px;
     }
-
-    /* High Readability Content */
-    html, body, [class*="st-"], p, label {
-        color: #000000 !important;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 18px;
-    }
-
-    /* EXACT Result Box Style from Screenshots */
     .result-box {
         background-color: #f9f9f9;
-        padding: 30px;
+        padding: 25px;
         border-radius: 15px;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.05);
-        min-height: 260px;
+        border: 1px solid #ddd;
+        min-height: 250px;
+        color: #000 !important;
     }
-
-    /* News Ticker - Navy Blue */
     .ticker-wrap {
-        width: 100%; overflow: hidden; background: #003366;
-        padding: 12px 0; border-radius: 10px; margin-bottom: 30px;
+        width: 100%; background: #003366; color: white;
+        padding: 10px; border-radius: 10px; margin-bottom: 25px;
+        overflow: hidden; white-space: nowrap;
     }
     .ticker {
-        display: inline-block; white-space: nowrap;
-        animation: ticker 45s linear infinite; color: #ffffff; font-size: 19px;
+        display: inline-block;
+        animation: ticker 40s linear infinite;
     }
     @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. AI CONFIGURATION
-# Replace with your actual Gemini API Key
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
-genai.configure(api_key=GEMINI_API_KEY)
+# 3. API SETUP
+# PLEASE ADD YOUR KEY HERE
+API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+genai.configure(api_key=API_KEY)
 
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
+if 'auth' not in st.session_state:
+    st.session_state['auth'] = False
 
-# --- PHASE 1: LOGIN WINDOW ---
-if not st.session_state['logged_in']:
+# --- LOGIN PAGE ---
+if not st.session_state['auth']:
     st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='sub-header'>Secure Institutional Access</p>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 1.8, 1])
+    st.markdown("<p class='sub-title'>Secure Banker Portal</p>", unsafe_allow_html=True)
+    _, col2, _ = st.columns([1, 2, 1])
     with col2:
-        # High-Quality Login Image
-        st.image("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80", use_container_width=True)
+        st.image("https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800", use_container_width=True)
         user = st.text_input("Username")
         pw = st.text_input("Password", type="password")
-        if st.button("Login to Dashboard", use_container_width=True):
+        if st.button("Login", use_container_width=True):
             if user == "admin" and pw == "finance123":
-                st.session_state['logged_in'] = True
+                st.session_state['auth'] = True
                 st.rerun()
             else:
-                st.error("Invalid Username or Password")
+                st.error("Invalid Credentials")
 else:
-    # --- PHASE 2: AUTHORIZED DASHBOARD ---
+    # --- MAIN DASHBOARD ---
     st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
     
-    st.markdown("""<div class="ticker-wrap"><div class="ticker">
-        <span style="margin-right:70px;">📈 MSME Sector: Credit growth projected at 12.5% for 2026</span>
-        <span style="margin-right:70px;">📢 RBI Alert: New provisioning norms for unsecured loans</span>
-        <span style="margin-right:70px;">🚀 Tech Alert: AI-driven credit scoring reduces NPA by 15%</span>
-    </div></div>""", unsafe_allow_html=True)
+    st.markdown('<div class="ticker-wrap"><div class="ticker">📢 Market Alert: RBI keeps repo rates steady at 6.5% | 📈 MSME Loan demand rises by 15% | ⚠️ Update KYC for all High-Risk accounts</div></div>', unsafe_allow_html=True)
 
-    st.sidebar.title("System Controls")
-    st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
+    tab1, tab2, tab3 = st.tabs(["Individual Analysis", "Bulk Dashboard", "AI Help"])
 
-    t1, t2, t3 = st.tabs(["Individual Analysis", "Portfolio Dashboard", "AI Assistant"])
-
-    with t1:
-        st.subheader("🔍 New Loan Evaluation")
+    with tab1:
         c1, c2 = st.columns(2)
         with c1:
-            biz_name = st.text_input("Business Name", value="Sharma Global Ventures")
-            rev = st.number_input("Annual Revenue (₹ Cr)", value=2.0)
-            years = st.number_input("Years in Business", value=6)
-            industry = st.selectbox("Industry Risk", ["Low Risk", "Medium Risk", "High Risk", "Very High Risk"])
+            name = st.text_input("Business Name", "Global Tech")
+            rev = st.number_input("Annual Revenue (₹ Cr)", 2.5)
+            years = st.number_input("Years in Business", 5)
+            ind = st.selectbox("Industry Risk", ["Low Risk", "Medium Risk", "High Risk"])
         with c2:
-            cibil = st.number_input("CIBIL Score", min_value=300, max_value=900, value=720)
-            dti = st.slider("Debt-to-Income (%)", 0, 100, 35
+            cibil = st.number_input("CIBIL Score", 720)
+            dti = st.slider("DTI Ratio (%)", 0, 100, 30)
+            st.text_input("Loan Purpose", "Expansion")
+
+        if st.button("Generate AI Credit Report", use_container_width=True):
+            # LOGIC
+            score = 75  # Default for visual check
+            # Exact Factor scoring
+            s1 = 25 if rev > 5 else 15
+            s2 = 25 if cibil > 750 else 15
+            score = s1 + s2 + 35 
+
+            # GAUGE CHART (SHARP ARROW)
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number", value=score,
+                gauge={
+                    'axis': {'range': [0, 100]},
+                    'bar': {'color': "black", 'thickness': 0.2}, # SHARP NEEDLE
+                    'steps': [
+                        {'range': [0, 60], 'color': "red"},
+                        {'range': [60, 80], 'color': "yellow"},
+                        {'range': [80, 100], 'color': "green"}]
+                }))
+            fig.update_layout(height=300, margin=dict(t=20, b=20))
+            st.plotly_chart(fig, use_container_width=True)
+
+            # RESULT BOXES
+            st.markdown(f"### Assessment for {name}")
+            res1, res2 = st.columns(2)
+            with res1:
+                st.markdown(f'<div class="result-box"><h4>📊 Result</h4><b>Score:</b> {score}/100<br><b>Decision:</b> REFERRED</div>', unsafe_allow_html=True)
+            with res2:
+                st.markdown('<div class="result-box"><h4>🤖 AI Suggestion</h4>Check GST filings and verify collateral status.</div>', unsafe_allow_html=True)
+
+    with tab2:
+        st.file_uploader("Upload Portfolio")
+    
+    with tab3:
+        st.text_input("Ask AI")
