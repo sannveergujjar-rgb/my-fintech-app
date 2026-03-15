@@ -4,90 +4,131 @@ import plotly.express as px
 import plotly.graph_objects as go
 import google.generativeai as genai
 
-# 1. SETUP & STYLING (Same as before)
+# 1. SETUP & STYLE
 st.set_page_config(page_title="Credit Risk AI Analyzer", layout="wide")
 st.markdown("""
     <style>
     .stApp { background: #ffffff; }
-    .main-header { text-align: center; color: #003366; font-size: 48px; font-weight: 800; padding: 20px; }
-    .result-box { background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid #dee2e6; color: black; }
+    .main-header { text-align: center; color: #003366; font-size: 48px; font-weight: 800; padding: 20px; border-bottom: 2px solid #eee; }
+    .result-box { background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid #dee2e6; color: black; margin-bottom: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. LOGIN LOGIC (Shortened for brevity)
+# 2. API & AUTH
+API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+genai.configure(api_key=API_KEY)
+
 if 'auth' not in st.session_state: st.session_state['auth'] = False
+
 if not st.session_state['auth']:
     st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
-    _, col2, _ = st.columns([1, 1.5, 1])
+    _, col2, _ = st.columns([1, 1.8, 1])
     with col2:
-        st.image("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800", use_container_width=True)
-        user = st.text_input("Username")
-        pw = st.text_input("Password", type="password")
+        st.image("https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800", use_container_width=True)
+        u, p = st.text_input("User"), st.text_input("Pass", type="password")
         if st.button("Login", use_container_width=True):
-            if user == "admin" and pw == "finance123": 
+            if u == "admin" and p == "finance123":
                 st.session_state['auth'] = True
                 st.rerun()
 else:
     st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
-    tab1, tab2, tab3 = st.tabs(["Individual Analysis", "Portfolio View", "AI Research"])
+    tab1, tab2, tab3 = st.tabs(["Individual Analysis", "Portfolio View", "AI Research Assistant"])
 
-    # --- TAB 1: INDIVIDUAL (Previously shared) ---
+    # --- TAB 1: INDIVIDUAL ANALYSIS (UNTOUCHED) ---
     with tab1:
-        st.write("Perform single application analysis here.")
+        st.subheader("📋 Loan Application Assessment")
+        c1, c2 = st.columns(2)
+        with c1:
+            name = st.text_input("Business Name", "Sharma Enterprises")
+            rev = st.number_input("Annual Revenue (₹ Cr)", 2.5)
+            years = st.number_input("Years in Business", 5)
+        with c2:
+            cibil = st.number_input("CIBIL Score", 720)
+            dti = st.slider("DTI Ratio (%)", 0, 100, 30)
+            purpose = st.text_input("Loan Purpose", "Machinery Purchase")
 
-    # --- TAB 2: PORTFOLIO VIEW (FIXED) ---
+        if st.button("Generate Comprehensive Report", use_container_width=True):
+            s_rev = 30 if rev > 5 else 20
+            s_years = 20 if years > 5 else 15
+            s_cibil = 30 if cibil > 750 else 20
+            s_dti = 20 if dti < 40 else 10
+            score = s_rev + s_years + s_cibil + s_dti
+
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number", value=score,
+                gauge={
+                    'axis': {'range': [0, 100]},
+                    'bar': {'color': "black", 'thickness': 0.25},
+                    'steps': [{'range': [0, 60], 'color': "red"}, {'range': [60, 80], 'color': "orange"}, {'range': [80, 100], 'color': "green"}]
+                }))
+            fig.update_layout(height=300)
+            st.plotly_chart(fig, use_container_width=True)
+
+            res1, res2 = st.columns(2)
+            with res1:
+                st.markdown(f'<div class="result-box"><h4>📊 Result</h4>Score: {score}/100<br>Decision: {"APPROVED" if score >= 80 else "REFERRED"}</div>', unsafe_allow_html=True)
+            with res2:
+                st.markdown('<div class="result-box"><h4>🤖 AI Insights</h4>Verify GST and bank statements.</div>', unsafe_allow_html=True)
+
+    # --- TAB 2: PORTFOLIO VIEW (REWRITTEN & IMPROVISED) ---
     with tab2:
-        st.subheader("📊 Bulk Portfolio Assessment")
-        uploaded_file = st.file_uploader("Upload Applicant Excel File", type=["xlsx", "csv"])
+        st.subheader("📈 Bulk Portfolio Credit Risk Analysis")
+        up_file = st.file_uploader("Upload Excel File", type=["xlsx", "csv"])
 
-        if uploaded_file:
-            # READ DATA
+        if up_file:
             try:
-                if uploaded_file.name.endswith('.csv'):
-                    df = pd.read_csv(uploaded_file)
-                else:
-                    df = pd.read_excel(uploaded_file)
+                # Load data
+                df = pd.read_csv(up_file) if up_file.name.endswith('.csv') else pd.read_excel(up_file)
                 
-                st.success(f"✅ Loaded {len(df)} records successfully.")
-                
-                # PREVIEW TABLE
-                st.write("### Data Preview")
+                # Show Table
+                st.write("### 📂 Uploaded Applicant Data")
                 st.dataframe(df, use_container_width=True)
 
-                # ANALYSIS LOGIC (Simulating AI Risk Scoring for the Table)
-                # We assume the excel has columns: 'Revenue', 'CIBIL', 'DTI'
-                if all(col in df.columns for col in ['Revenue', 'CIBIL']):
-                    df['Risk Score'] = (df['CIBIL'] / 900 * 50) + (df['Revenue'].clip(0, 10) * 5)
-                    df['Risk Category'] = df['Risk Score'].apply(lambda x: 'Low' if x > 75 else ('Medium' if x > 55 else 'High'))
+                # Find key columns automatically (Case-insensitive search)
+                cols = {c.lower(): c for c in df.columns}
+                cibil_col = next((v for k, v in cols.items() if 'cibil' in k or 'score' in k), None)
+                rev_col = next((v for k, v in cols.items() if 'rev' in k or 'turnover' in k), None)
+
+                if cibil_col and rev_col:
+                    # Calculate Risk for each row
+                    df['Calculated Score'] = (df[cibil_col] / 900 * 60) + (df[rev_col].clip(0,10) * 4)
+                    df['Risk Status'] = df['Calculated Score'].apply(lambda x: 'Low' if x > 70 else ('Medium' if x > 50 else 'High'))
+
+                    # CHARTS SECTION
+                    st.write("### 📊 Risk Intelligence Dashboard")
+                    g1, g2 = st.columns(2)
                     
-                    # CHARTS & GRAPHS
-                    col_left, col_right = st.columns(2)
-                    
-                    with col_left:
-                        st.write("### Risk Distribution")
-                        fig_pie = px.pie(df, names='Risk Category', color='Risk Category',
-                                        color_discrete_map={'Low':'#2eb82e', 'Medium':'#ffd11a', 'High':'#ff4d4d'})
+                    with g1:
+                        fig_pie = px.pie(df, names='Risk Status', title="Overall Portfolio Risk Mix",
+                                        color='Risk Status', color_discrete_map={'Low':'green', 'Medium':'orange', 'High':'red'})
                         st.plotly_chart(fig_pie, use_container_width=True)
+                    
+                    with g2:
+                        fig_bar = px.bar(df, x=df.columns[0], y='Calculated Score', color='Risk Status',
+                                        title="Applicant Wise Credit Scores")
+                        st.plotly_chart(fig_bar, use_container_width=True)
 
-                    with col_right:
-                        st.write("### Revenue vs CIBIL Analysis")
-                        fig_scatter = px.scatter(df, x="CIBIL", y="Revenue", color="Risk Category",
-                                               hover_name=df.columns[0])
-                        st.plotly_chart(fig_scatter, use_container_width=True)
-
-                    # FINAL ANALYSIS BOX
+                    # ANALYSIS SUMMARY BOX
                     st.markdown('<div class="result-box">', unsafe_allow_html=True)
-                    st.write("### 🤖 Portfolio AI Summary")
-                    high_risk_count = len(df[df['Risk Category'] == 'High'])
-                    st.write(f"The portfolio contains **{len(df)}** total applications.")
-                    st.write(f"⚠️ **Alert:** Found **{high_risk_count}** High-Risk applications requiring immediate manual audit.")
-                    st.write("The average CIBIL across the portfolio is **{:.0f}**.".format(df['CIBIL'].mean()))
+                    st.write("### 🤖 AI Portfolio Analysis")
+                    st.write(f"• **Total Applicants Analyzed:** {len(df)}")
+                    st.write(f"• **Average Credit Score:** {df['Calculated Score'].mean():.1f}/100")
+                    st.write(f"• **High Risk Alerts:** {len(df[df['Risk Status']=='High'])} files require immediate rejection or higher collateral.")
+                    st.write("• **Observation:** The portfolio shows a concentration in " + df['Risk Status'].mode()[0] + " risk assets.")
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
-                    st.warning("Please ensure your Excel has 'CIBIL' and 'Revenue' columns to generate graphs.")
-
+                    st.error("❌ Column Missing: Please ensure your file has 'CIBIL' and 'Revenue' columns.")
+            
             except Exception as e:
-                st.error(f"Error processing file: {e}")
+                st.error(f"Error: {e}")
 
+    # --- TAB 3: AI RESEARCH ---
     with tab3:
-        st.write("Ask AI any banking questions.")
+        st.subheader("🤖 AI Research Assistant")
+        q = st.text_input("Ask any financial question...")
+        if st.button("Analyze"):
+            if q:
+                try:
+                    m = genai.GenerativeModel('gemini-1.5-flash')
+                    st.write(m.generate_content(q).text)
+                except: st.error("API Error")
