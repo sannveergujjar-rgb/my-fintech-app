@@ -60,7 +60,7 @@ else:
         <span style="margin-right:50px;">⚠️ New KYC Norms mandatory from April 2026</span>
     </div></div>""", unsafe_allow_html=True)
 
-    st.sidebar.title("🛡️ FinVantage Pro")
+    st.sidebar.title("🛡️ Credit Score AI Analyzer ")
     st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
 
     tab1, tab2, tab3 = st.tabs(["Individual Analysis", "Bulk Dashboard", "AI Research Assistant"])
@@ -85,6 +85,12 @@ else:
             s_cibil = 25 if cibil >= 750 else (20 if cibil >= 700 else (15 if cibil >= 650 else (10 if cibil >= 600 else 5)))
             ind_map = {"Low Risk": 10, "Medium Risk": 7, "High Risk": 4, "Very High Risk": 2}
             s_ind = ind_map[industry]
+              # Data Table for Report
+    df = pd.DataFrame({
+        "Metric": ["CIBIL Contribution", "Experience Score", "Debt-to-Income Score", "Final Total"],
+        "Value": [f"{cibil_score:.2f}", f"{exp_score:.2f}", f"{debt_ratio:.2f}", f"{total_score:.2f}"]
+    })
+    st.table(df)
 
             total_score = s_rev + s_years + s_dti + s_cibil + s_ind
 
