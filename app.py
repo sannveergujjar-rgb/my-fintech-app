@@ -1,62 +1,82 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-# MANDATORY: This must be the FIRST line of code
-st.set_page_config(page_title="FinTech Risk Portal", layout="wide")
+# 1. Page Config
+st.set_page_config(page_title="FinTech AI Hub", layout="wide")
 
-# 1. INITIALIZE LOGIN STATE
+# 2. Login Logic
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-# 2. LOGIN FUNCTION
-def show_login():
-    st.title("🔐 FinTech Portal Login")
-    with st.form("login_form"):
-        user = st.text_input("Username")
-        pw = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login")
-        
-        if submit:
-            if user == "admin" and pw == "finance123":
-                st.session_state['logged_in'] = True
-                st.rerun()
-            else:
-                st.error("Invalid Credentials. Use admin / finance123")
-
-# 3. MAIN APP LOGIC
 if not st.session_state['logged_in']:
-    show_login()
-else:
-    # Sidebar Logout
-    if st.sidebar.button("Logout"):
-        st.session_state['logged_in'] = False
-        st.rerun()
-
-    st.title("🛡️ AI Credit Risk Analyzer")
-    st.write("Welcome to the Secure MSME Lending Dashboard")
-
-    # FILE UPLOADER SECTION
-    st.header("📂 Bulk Portfolio Analysis")
-    uploaded_file = st.file_uploader("Upload Excel/CSV", type=["csv", "xlsx"])
-    
-    if uploaded_file:
-        try:
-            df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-            st.success("File Uploaded Successfully!")
-            st.dataframe(df.head())
-        except Exception as e:
-            st.error(f"Error reading file: {e}")
-
-    st.divider()
-
-    # MANUAL INPUT SECTION
-    st.sidebar.header("Single Entry Analysis")
-    biz = st.sidebar.text_input("Business Name")
-    cibil = st.sidebar.slider("CIBIL Score", 300, 900, 700)
-    
-    if st.sidebar.button("Run AI Analysis"):
-        st.subheader(f"Results for {biz}")
-        if cibil > 700:
-            st.success(f"CIBIL {cibil}: LOW RISK - APPROVE")
+    st.title("🔐 FinTech Portal Login")
+    user = st.text_input("Username")
+    pw = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if user == "admin" and pw == "finance123":
+            st.session_state['logged_in'] = True
+            st.rerun()
         else:
-            st.error(f"CIBIL {cibil}: HIGH RISK - REJECT")
+            st.error("Invalid Credentials")
+else:
+    # --- APP HEADER ---
+    st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
+    st.title("🛡️ MSME AI Credit Risk System")
+    
+    # --- TAB SYSTEM ---
+    tab1, tab2 = st.tabs(["Individual Analysis", "Bulk Portfolio Dashboard"])
+
+    # --- TAB 1: INDIVIDUAL ANALYSIS (Your Original Feature) ---
+    with tab1:
+        st.header("Manual Loan Underwriting")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            biz_name = st.text_input("Business Name")
+            revenue = st.number_input("Annual Revenue (₹ Lakhs)", value=50)
+            debt = st.number_input("Total Debt (₹ Lakhs)", value=10)
+        with col2:
+            years = st.slider("Years in Business", 0, 30, 5)
+            cibil = st.slider("CIBIL Score", 300, 900, 750)
+        
+        if st.button("Generate AI Assessment"):
+            # Calculation Logic
+            score = ((cibil-300)/600*40) + (min(years/10*30, 30)) + (max(0, (1 - debt/revenue)*30))
+            
+            st.subheader(f"Report for {biz_name}")
+            if score > 70:
+                st.success(f"**Final Decision: APPROVED** (Score: {score:.1f}/100)")
+                st.info("AI Assessment: Strong repayment capacity and credit history.")
+            elif score > 50:
+                st.warning(f"**Final Decision: REFER TO COMMITTEE** (Score: {score:.1f}/100)")
+                st.info("AI Assessment: Marginal scores. Requires additional collateral.")
+            else:
+                st.error(f"**Final Decision: REJECTED** (Score: {score:.1f}/100)")
+                st.info("AI Assessment: High risk of default due to low CIBIL/High Leverage.")
+
+    # --- TAB 2: BULK DASHBOARD (The New Feature) ---
+    with tab2:
+        st.header("Portfolio Analytics")
+        uploaded_file = st.file_uploader("Upload Excel/CSV", type=["csv", "xlsx"])
+
+        if uploaded_file:
+            df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+            
+            # Dashboard Metrics
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Total Cases", len(df))
+            if "CIBIL" in df.columns:
+                m2.metric("Avg CIBIL", f"{df['CIBIL'].mean():.0f}")
+                
+            # Charts
+            c1, c2 = st.columns(2)
+            if "CIBIL" in df.columns:
+                fig = px.box(df, y="CIBIL", title="Credit Score Spread", points="all")
+                c1.plotly_chart(fig, use_container_width=True)
+            
+            if "Industry" in df.columns:
+                fig2 = px.pie(df, names="Industry", title="Portfolio Sector Mix")
+                c2.plotly_chart(fig2, use_container_width=True)
+                
+            st.dataframe(df)
