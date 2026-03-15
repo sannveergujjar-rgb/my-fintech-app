@@ -28,13 +28,14 @@ st.markdown("""
         font-size: 18px;
     }
 
+    /* Result Box Style matching your image */
     .result-box {
-        background-color: #ffffff;
+        background-color: #f8f9fa;
         padding: 25px;
         border-radius: 12px;
-        border: 2px solid #eef2f7;
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.05);
+        border: 1px solid #dee2e6;
         min-height: 250px;
+        margin-bottom: 20px;
     }
 
     .ticker-wrap {
@@ -49,7 +50,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-FREE_GEMINI_KEY = "AIzaSyDJpB4Awjomr8NEJnHEbVbEA72sASmw0T4"
+# 3. API CONFIG (Replace with your Gemini Key)
+FREE_GEMINI_KEY = "AIzaSyD4tTla_uHpt-JvfZQyPxeEwPptA-keMCo"
 genai.configure(api_key=FREE_GEMINI_KEY)
 
 if 'logged_in' not in st.session_state:
@@ -58,11 +60,11 @@ if 'logged_in' not in st.session_state:
 # --- LOGIN SCREEN ---
 if not st.session_state['logged_in']:
     st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,1.8,1])
+    col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
-        # NEW HIGH-QUALITY IMAGE
-        st.image("https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=1000", use_container_width=True)
-        st.markdown("<h3 style='text-align: center;'>Secure Banker Access</h3>", unsafe_allow_html=True)
+        # Professional Login Image
+        st.image("https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1000", use_container_width=True)
+        st.markdown("<h3 style='text-align: center;'>🔒 Secure Banker Access</h3>", unsafe_allow_html=True)
         user = st.text_input("Username")
         pw = st.text_input("Password", type="password")
         if st.button("Login to Dashboard", use_container_width=True):
@@ -72,11 +74,12 @@ if not st.session_state['logged_in']:
             else:
                 st.error("Invalid Credentials")
 else:
+    # --- DASHBOARD HEADER ---
     st.markdown("<h1 class='main-header'>Credit Risk AI Analyzer</h1>", unsafe_allow_html=True)
     
     st.markdown("""<div class="ticker-wrap"><div class="ticker">
-        <span style="margin-right:60px;">🚀 MSME Lending Cap increased by Govt</span>
-        <span style="margin-right:60px;">📈 Inflation dips to 4.2% - Positive for Borrowers</span>
+        <span style="margin-right:60px;">📢 RBI Update: Repo Rate remains stable at 6.5%</span>
+        <span style="margin-right:60px;">📈 MSME Lending grows by 14% this quarter</span>
         <span style="margin-right:60px;">🛑 Alert: RBI updates NPA reporting guidelines</span>
     </div></div>""", unsafe_allow_html=True)
 
@@ -89,16 +92,17 @@ else:
         st.subheader("📋 New Loan Application Underwriting")
         c1, c2 = st.columns(2)
         with c1:
-            biz_name = st.text_input("Business Name", value="Global Tech Solutions")
-            rev = st.number_input("Annual Revenue (₹ Cr)", value=1.5)
-            years = st.number_input("Years in Business", value=5)
+            biz_name = st.text_input("Business Name", value="Sharma Enterprises")
+            rev = st.number_input("Annual Revenue (₹ Cr)", value=2.0)
+            years = st.number_input("Years in Business", value=6)
             industry = st.selectbox("Industry Risk Category", ["Low Risk", "Medium Risk", "High Risk", "Very High Risk"])
         with c2:
-            cibil = st.number_input("CIBIL Score", value=740, min_value=300, max_value=900)
-            dti = st.slider("Debt-to-Income Ratio (%)", 0, 100, 25)
-            purpose = st.text_input("Loan Purpose", value="Working Capital")
+            cibil = st.number_input("CIBIL Score", value=720, min_value=300, max_value=900)
+            dti = st.slider("Debt-to-Income Ratio (%)", 0, 100, 35)
+            purpose = st.text_input("Loan Purpose", value="Expansion")
 
         if st.button("Analyze Creditworthiness", use_container_width=True):
+            # Scoring Logic
             s_rev = 25 if rev > 5 else (20 if rev >= 1 else 15)
             s_years = 15 if years > 10 else (12 if years >= 5 else 9)
             s_dti = 25 if dti < 20 else (20 if dti <= 40 else 15)
@@ -107,7 +111,7 @@ else:
             
             total_score = s_rev + s_years + s_dti + s_cibil + ind_val
 
-            # --- SHORTER GAUGE CHART ---
+            # Gauge Chart - Shortened Height
             fig = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=total_score,
@@ -119,12 +123,11 @@ else:
                         {'range': [60, 80], 'color': "#ffcc00"},
                         {'range': [80, 100], 'color': "#00cc66"}]
                 }))
-            # Height adjusted to 350 to make it shorter
-            fig.update_layout(height=350, margin=dict(l=20, r=20, t=50, b=20))
+            fig.update_layout(height=300, margin=dict(l=20, r=20, t=30, b=20))
             st.plotly_chart(fig, use_container_width=True)
 
-            # --- RESULT IN SPECIFIC STYLE ---
-            st.markdown(f"### Assessment Report: {biz_name}")
+            # --- FINAL STYLE RESULT BOXES ---
+            st.markdown(f"### 📋 Assessment Report: {biz_name}")
             res_c1, res_c2 = st.columns(2)
             
             with res_c1:
@@ -145,28 +148,28 @@ else:
 
             with res_c2:
                 st.markdown('<div class="result-box">', unsafe_allow_html=True)
-                st.subheader("🤖 AI Suggestions")
+                st.subheader("💡 Suggestions & Recommendations")
                 try:
                     model = genai.GenerativeModel('gemini-1.5-flash')
-                    prompt = f"Act as a Senior Credit Officer. Analyze: {biz_name}, Score {total_score}, CIBIL {cibil}, DTI {dti}%. Provide 3 bulleted strategic recommendations."
+                    prompt = f"Analyze business {biz_name} with score {total_score}/100. Provide 3 short, professional banking recommendations."
                     response = model.generate_content(prompt)
                     st.write(response.text)
                 except:
-                    st.write("• Verify tax audit reports.\n• Monitor Debt-Service Coverage Ratio.\n• Check for existing defaults.")
+                    st.write("• Verify GST filings.\n• Monitor debt-to-equity ratio.\n• Check collateral.")
                 st.markdown('</div>', unsafe_allow_html=True)
 
     with tab2:
         st.header("📈 Portfolio Performance")
-        st.info("Upload Excel/CSV to analyze bulk applications.")
-        st.file_uploader("Select Financial Dataset")
+        st.info("Upload Excel to analyze bulk credit applications.")
+        st.file_uploader("Upload File")
 
     with tab3:
         st.header("🤖 Financial AI Assistant")
-        q = st.text_input("Enter your query (e.g., 'What are Basel III norms?')")
-        if st.button("Search AI Database"):
+        q = st.text_input("Ask a question about credit risk...")
+        if st.button("Query AI"):
             if q:
                 try:
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     st.write(model.generate_content(q).text)
                 except:
-                    st.error("AI service error. Check API Key.")
+                    st.error("Check API Key.")
