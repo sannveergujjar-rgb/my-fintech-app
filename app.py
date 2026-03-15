@@ -1,58 +1,62 @@
 import streamlit as st
 import pandas as pd
 
-# 1. SIMPLE LOGIN SYSTEM
+# MANDATORY: This must be the FIRST line of code
+st.set_page_config(page_title="FinTech Risk Portal", layout="wide")
+
+# 1. INITIALIZE LOGIN STATE
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-def login():
+# 2. LOGIN FUNCTION
+def show_login():
     st.title("🔐 FinTech Portal Login")
-    user = st.text_input("Username (MBA Student)")
-    pw = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if user == "admin" and pw == "finance123": # You can change these
-            st.session_state['logged_in'] = True
-            st.rerun()
-        else:
-            st.error("Invalid Credentials")
+    with st.form("login_form"):
+        user = st.text_input("Username")
+        pw = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
+        
+        if submit:
+            if user == "admin" and pw == "finance123":
+                st.session_state['logged_in'] = True
+                st.rerun()
+            else:
+                st.error("Invalid Credentials. Use admin / finance123")
 
-# 2. MAIN APP INTERFACE
-if st.session_state['logged_in']:
-    st.set_page_config(page_title="MSME AI Analyzer", layout="wide")
-    if st.button("Log Out"):
+# 3. MAIN APP LOGIC
+if not st.session_state['logged_in']:
+    show_login()
+else:
+    # Sidebar Logout
+    if st.sidebar.button("Logout"):
         st.session_state['logged_in'] = False
         st.rerun()
 
     st.title("🛡️ AI Credit Risk Analyzer")
-    
-    # FEATURE: FILE UPLOAD
+    st.write("Welcome to the Secure MSME Lending Dashboard")
+
+    # FILE UPLOADER SECTION
     st.header("📂 Bulk Portfolio Analysis")
-    uploaded_file = st.file_uploader("Upload Business Data (Excel/CSV)", type=["csv", "xlsx"])
+    uploaded_file = st.file_uploader("Upload Excel/CSV", type=["csv", "xlsx"])
     
     if uploaded_file:
-        data = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-        st.write("### Data Preview", data.head())
-        # Add MBA Logic: Calculate Average CIBIL for the file
-        if 'CIBIL' in data.columns:
-            st.info(f"Average Portfolio CIBIL: {data['CIBIL'].mean():.2f}")
-    
+        try:
+            df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+            st.success("File Uploaded Successfully!")
+            st.dataframe(df.head())
+        except Exception as e:
+            st.error(f"Error reading file: {e}")
+
     st.divider()
 
-    # SIDEBAR: MANUAL INPUT
-    st.sidebar.header("Manual Single Entry")
-    biz_name = st.sidebar.text_input("Business Name")
-    revenue = st.sidebar.number_input("Annual Revenue (₹ Lakhs)", value=50)
-    years = st.sidebar.slider("Years in Business", 0, 30, 5)
-    cibil = st.sidebar.slider("CIBIL Score", 300, 900, 750)
-
-    if st.sidebar.button("Analyze Risk"):
-        # Logic: (CIBIL 40% + Exp 30% + Revenue 30%)
-        score = ((cibil-300)/600*40) + (min(years/10*30, 30)) + 30
-        st.subheader(f"Results for {biz_name}")
-        if score > 70:
-            st.success(f"Score: {score:.1f} - APPROVED (Low Risk)")
+    # MANUAL INPUT SECTION
+    st.sidebar.header("Single Entry Analysis")
+    biz = st.sidebar.text_input("Business Name")
+    cibil = st.sidebar.slider("CIBIL Score", 300, 900, 700)
+    
+    if st.sidebar.button("Run AI Analysis"):
+        st.subheader(f"Results for {biz}")
+        if cibil > 700:
+            st.success(f"CIBIL {cibil}: LOW RISK - APPROVE")
         else:
-            st.error(f"Score: {score:.1f} - REJECTED (High Risk)")
-
-else:
-    login()
+            st.error(f"CIBIL {cibil}: HIGH RISK - REJECT")
